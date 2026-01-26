@@ -6,7 +6,7 @@ An intelligent system that analyzes Apache Spark configurations from Git reposit
 
 - **📄 Configuration Parsing**: Automatically parse `spark-defaults.conf` files and `spark-submit` scripts
 - **📊 Metrics Integration**: Fetch real-time execution data from Spark History Server REST API
-- **🤖 AI-Powered Analysis**: Use Gemini AI to generate intelligent recommendations
+- **🤖 AI-Powered Analysis**: Use OpenAI to generate intelligent recommendations
 - **🔍 Rule-Based Validation**: Built-in heuristics for common Spark anti-patterns
 - **🎭 Demo Mode**: Works standalone with mock data for presentations
 - **🔧 MCP Server**: Expose tools for AI agents to interact with Spark configurations
@@ -35,7 +35,7 @@ An intelligent system that analyzes Apache Spark configurations from Git reposit
                   ▼
          ┌────────────────┐
          │   AI Agent     │
-         │  (Gemini)      │
+         │   (OpenAI)     │
          └────────┬───────┘
                   │
                   ▼
@@ -63,7 +63,7 @@ pip install -r requirements.txt
 
 # (Optional) Set up environment variables
 cp .env.example .env
-# Edit .env and add your GEMINI_API_KEY
+# Edit .env and add your OPENAI_API_KEY
 ```
 
 ### Run the Demo
@@ -89,7 +89,7 @@ python -m spark_config_mcp.server
 The server exposes 4 tools for AI agents:
 - `parse_spark_config` - Parse configuration files
 - `fetch_app_metrics` - Get execution metrics
-- `analyze_configuration` - Full analysis with AI
+- `analyze_configuration` - Full analysis with OpenAI
 - `get_recommendations` - Filtered recommendations
 
 ## 📚 MCP Tools Documentation
@@ -259,7 +259,7 @@ agent-spark/
 
 ### Environment Variables
 
-- `GEMINI_API_KEY` - Google AI API key (optional, enables AI analysis)
+- `OPENAI_API_KEY` - OpenAI API key (optional, enables AI analysis)
 - `SPARK_HISTORY_SERVER_URL` - History Server URL (default: `http://localhost:18080`)
 - `USE_MOCK_DATA` - Use mock data (default: `true`)
 

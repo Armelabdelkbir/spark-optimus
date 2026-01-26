@@ -11,21 +11,20 @@ class ConfigAnalyzer:
     
     def __init__(self, api_key: Optional[str] = None):
         """
-        Initialize the analyzer with Gemini API.
+        Initialize the analyzer with OpenAI API.
         
         Args:
-            api_key: Google AI API key (defaults to GEMINI_API_KEY env var)
+            api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
         """
-        self.api_key = api_key or os.getenv('GEMINI_API_KEY')
-        self.model = None
+        self.api_key = api_key or os.getenv('OPENAI_API_KEY')
+        self.client = None
         
         if self.api_key:
             try:
-                import google.generativeai as genai
-                genai.configure(api_key=self.api_key)
-                self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+                from openai import OpenAI
+                self.client = OpenAI(api_key=self.api_key)
             except Exception as e:
-                print(f"Warning: Could not initialize Gemini API: {e}")
+                print(f"Warning: Could not initialize OpenAI API: {e}")
     
     def _create_analysis_prompt(self, config: SparkConfig, metrics: Optional[ExecutionMetrics]) -> str:
         """Create a detailed prompt for Gemini analysis."""
@@ -191,19 +190,25 @@ Be specific with numbers and provide actionable recommendations.
         # Add rule-based recommendations (always available)
         result.recommendations.extend(self._rule_based_analysis(config, metrics))
         
-        # Add AI-powered recommendations if Gemini is available
-        if self.model:
+        # Add AI-powered recommendations if OpenAI is available
+        if self.client:
             try:
                 prompt = self._create_analysis_prompt(config, metrics)
-                response = self.model.generate_content(prompt)
-                summary, ai_recommendations = self._parse_gemini_response(response.text)
+                response = self.client.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": "You are a Spark performance expert."},
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                summary, ai_recommendations = self._parse_gemini_response(response.choices[0].message.content)
                 result.summary = summary
                 result.recommendations.extend(ai_recommendations)
             except Exception as e:
-                print(f"Warning: Gemini analysis failed: {e}")
+                print(f"Warning: OpenAI analysis failed: {e}")
                 result.summary = "Configuration analyzed using rule-based system."
         else:
-            result.summary = "Configuration analyzed using rule-based system. Set GEMINI_API_KEY for AI-powered insights."
+            result.summary = "Configuration analyzed using rule-based system. Set OPENAI_API_KEY for AI-powered insights."
         
         return result
     

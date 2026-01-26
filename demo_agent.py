@@ -152,7 +152,7 @@ def main():
     
     print("\n✅ Demo completed successfully!")
     print("\n💡 Next Steps:")
-    print("   1. Set GEMINI_API_KEY environment variable for AI-powered insights")
+    print("📝 Summary: Configuration analyzed using rule-based system. Set OPENAI_API_KEY for AI-powered insights.\n")
     print("   2. Connect to a real Spark History Server by setting SPARK_HISTORY_SERVER_URL")
     print("   3. Use the MCP server with AI agents for interactive analysis")
     print("\n" + "=" * 80 + "\n")
