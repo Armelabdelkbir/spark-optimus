@@ -1,0 +1,135 @@
+{
+    "applications": [
+        {
+            "id": "app-20260126-001",
+            "name": "Production_Data_Pipeline_v1",
+            "attempts": [
+                {
+                    "startTime": "2026-01-26T14:00:00.000Z",
+                    "endTime": "2026-01-26T14:30:00.000Z",
+                    "duration": 1800000,
+                    "sparkUser": "spark",
+                    "completed": true
+                }
+            ],
+            "executorSummary": {
+                "memoryUsed": 64424509440,
+                "diskUsed": 5368709120,
+                "totalCores": 40,
+                "maxMemory": 85899345920
+            },
+            "stages": [
+                {
+                    "stageId": 0,
+                    "name": "Read Input Data",
+                    "status": "COMPLETE",
+                    "numTasks": 50,
+                    "numFailedTasks": 0,
+                    "inputBytes": 53687091200,
+                    "outputBytes": 0,
+                    "shuffleReadBytes": 0,
+                    "shuffleWriteBytes": 16106127360,
+                    "memoryBytesSpilled": 536870912,
+                    "diskBytesSpilled": 0
+                },
+                {
+                    "stageId": 1,
+                    "name": "Transform and Aggregate",
+                    "status": "COMPLETE",
+                    "numTasks": 200,
+                    "numFailedTasks": 3,
+                    "inputBytes": 0,
+                    "outputBytes": 0,
+                    "shuffleReadBytes": 16106127360,
+                    "shuffleWriteBytes": 10737418240,
+                    "memoryBytesSpilled": 2147483648,
+                    "diskBytesSpilled": 1073741824
+                },
+                {
+                    "stageId": 2,
+                    "name": "Join Operations",
+                    "status": "COMPLETE",
+                    "numTasks": 150,
+                    "numFailedTasks": 2,
+                    "inputBytes": 0,
+                    "outputBytes": 0,
+                    "shuffleReadBytes": 10737418240,
+                    "shuffleWriteBytes": 8589934592,
+                    "memoryBytesSpilled": 1610612736,
+                    "diskBytesSpilled": 536870912
+                },
+                {
+                    "stageId": 3,
+                    "name": "Write Output",
+                    "status": "COMPLETE",
+                    "numTasks": 100,
+                    "numFailedTasks": 0,
+                    "inputBytes": 0,
+                    "outputBytes": 32212254720,
+                    "shuffleReadBytes": 8589934592,
+                    "shuffleWriteBytes": 0,
+                    "memoryBytesSpilled": 268435456,
+                    "diskBytesSpilled": 0
+                }
+            ],
+            "metrics": {
+                "executorRunTime": 1620000,
+                "executorCpuTime": 1440000,
+                "executorDeserializeTime": 15000,
+                "executorDeserializeCpuTime": 12000,
+                "resultSize": 2048,
+                "jvmGCTime": 120000,
+                "resultSerializationTime": 500,
+                "memoryBytesSpilled": 5368709120,
+                "diskBytesSpilled": 2684354560,
+                "peakExecutionMemory": 80530636800
+            }
+        },
+        {
+            "id": "app-20260126-002",
+            "name": "Test_Small_Job",
+            "attempts": [
+                {
+                    "startTime": "2026-01-26T15:00:00.000Z",
+                    "endTime": "2026-01-26T15:05:00.000Z",
+                    "duration": 300000,
+                    "sparkUser": "spark",
+                    "completed": true
+                }
+            ],
+            "executorSummary": {
+                "memoryUsed": 4294967296,
+                "diskUsed": 0,
+                "totalCores": 40,
+                "maxMemory": 85899345920
+            },
+            "stages": [
+                {
+                    "stageId": 0,
+                    "name": "Simple Aggregation",
+                    "status": "COMPLETE",
+                    "numTasks": 10,
+                    "numFailedTasks": 0,
+                    "inputBytes": 1073741824,
+                    "outputBytes": 536870912,
+                    "shuffleReadBytes": 0,
+                    "shuffleWriteBytes": 0,
+                    "memoryBytesSpilled": 0,
+                    "diskBytesSpilled": 0
+                }
+            ],
+            "metrics": {
+                "executorRunTime": 280000,
+                "executorCpuTime": 260000,
+                "executorDeserializeTime": 2000,
+                "executorDeserializeCpuTime": 1800,
+                "resultSize": 512,
+                "jvmGCTime": 8000,
+                "resultSerializationTime": 100,
+                "memoryBytesSpilled": 0,
+                "diskBytesSpilled": 0,
+                "peakExecutionMemory": 5368709120
+            }
+        }
+    ]
+}

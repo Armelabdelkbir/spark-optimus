@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spark-config-mcp"
+version = "0.1.0"
+description = "Agent-based evaluation of Spark configurations with MCP server"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "google-generativeai>=0.8.0",
+    "requests>=2.31.0",
+]
+
+[project.scripts]
+spark-config-mcp = "spark_config_mcp.server:main"
