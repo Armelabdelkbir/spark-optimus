@@ -17,12 +17,17 @@ class ConfigAnalyzer:
             api_key: OpenAI API key (defaults to OPENAI_API_KEY env var)
         """
         self.api_key = api_key or os.getenv('OPENAI_API_KEY')
+        self.base_url = os.getenv('OPENAI_BASE_URL')
+        self.model = os.getenv('OPENAI_MODEL_NAME', 'gpt-4o')
         self.client = None
         
         if self.api_key:
             try:
                 from openai import OpenAI
-                self.client = OpenAI(api_key=self.api_key)
+                self.client = OpenAI(
+                    api_key=self.api_key,
+                    base_url=self.base_url
+                )
             except Exception as e:
                 print(f"Warning: Could not initialize OpenAI API: {e}")
     
@@ -170,7 +175,38 @@ Be specific with numbers and provide actionable recommendations.
         
         return summary, recommendations
     
-    def analyze(self, config: SparkConfig, metrics: Optional[ExecutionMetrics] = None) -> AnalysisResult:
+    def analyze_text(self, context: str, user_prompt: Optional[str] = None) -> str:
+        """
+        Generic AI analysis of any text context (e.g. logs, metrics from AWS MCP).
+        
+        Args:
+            context: The raw data or JSON to analyze
+            user_prompt: Optional specific question from the user
+            
+        Returns:
+            AI-generated recommendation string
+        """
+        if not self.client:
+            return "AI Analysis unavailable. Please set OPENAI_API_KEY."
+
+        system_msg = "You are a Spark Performance Engineer. Analyze the provided context (metrics, logs, or JSON) and provide concise, actionable optimization recommendations."
+        
+        prompt = f"### CONTEXT DATA:\n{context}\n\n"
+        if user_prompt:
+            prompt += f"### USER QUESTION:\n{user_prompt}\n\n"
+        prompt += "Please analyze this and provide specific Spark tuning advice."
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            return f"AI Analysis failed: {str(e)}"
         """
         Analyze configuration and generate recommendations.
         

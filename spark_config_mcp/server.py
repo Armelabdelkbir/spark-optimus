@@ -120,6 +120,25 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["config_path"]
             }
+        ),
+        Tool(
+            name="analyze_with_ai",
+            description="Bridge tool to get AI optimizations from ANY data source. "
+                        "Paste raw JSON or text (e.g. from AWS Spark MCP tools) to get intelligent recommendations.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "context": {
+                        "type": "string",
+                        "description": "Raw data, JSON, or logs to analyze"
+                    },
+                    "user_question": {
+                        "type": "string",
+                        "description": "Optional specific question for the AI"
+                    }
+                },
+                "required": ["context"]
+            }
         )
     ]
 
@@ -266,6 +285,29 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 "critical_count": len([r for r in recommendations if r.severity.value == "critical"]),
                 "warning_count": len([r for r in recommendations if r.severity.value == "warning"]),
                 "info_count": len([r for r in recommendations if r.severity.value == "info"])
+            }
+            
+            return [TextContent(
+                type="text",
+                text=json.dumps(result, indent=2)
+            )]
+        except Exception as e:
+            return [TextContent(
+                type="text",
+                text=json.dumps({"success": False, "error": str(e)}, indent=2)
+            )]
+    
+    elif name == "analyze_with_ai":
+        context = arguments["context"]
+        user_question = arguments.get("user_question")
+        
+        try:
+            # Call the new generic analyzer method
+            recommendation = analyzer.analyze_text(context, user_question)
+            
+            result = {
+                "success": True,
+                "recommendation": recommendation
             }
             
             return [TextContent(
