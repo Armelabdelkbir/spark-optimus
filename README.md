@@ -58,8 +58,13 @@ An intelligent system that analyzes Apache Spark configurations from Git reposit
 # Clone or navigate to the project
 cd agent-spark
 
-# Install dependencies
-pip install -r requirements.txt
+# Install uv if you don't have it
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Install dependencies and setup environment
+uv venv
+source .venv/bin/activate
+uv pip install -e .
 
 # (Optional) Set up environment variables
 cp .env.example .env
@@ -70,7 +75,7 @@ cp .env.example .env
 
 ```bash
 # Run the standalone demo
-python demo_agent.py
+uv run demo_agent.py
 ```
 
 This will:
@@ -83,7 +88,7 @@ This will:
 
 ```bash
 # Start the MCP server
-python -m spark_config_mcp.server
+uv run -m spark_config_mcp.server
 ```
 
 The server exposes 4 tools for AI agents:
@@ -231,6 +236,8 @@ if critical:
     print('CRITICAL ISSUES FOUND!')
     exit(1)
 "
+# Start the AWS Community MCP for Spark
+uv run -m mcp_apache_spark_history_server
 ```
 
 ## 📁 Project Structure

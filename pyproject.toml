@@ -16,3 +16,6 @@ dependencies = [
 
 [project.scripts]
 spark-config-mcp = "spark_config_mcp.server:main"
+
+[tool.setuptools]
+packages = ["spark_config_mcp"]

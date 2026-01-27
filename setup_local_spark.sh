@@ -19,8 +19,19 @@ if [ "$EUID" -eq 0 ]; then
    exit 1
 fi
 
-# Step 1: Check/Install Java
-echo -e "\n${YELLOW}Step 1: Checking Java installation...${NC}"
+# Step 1: Check/Install uv
+echo -e "\n${YELLOW}Step 1: Checking uv installation...${NC}"
+if ! command -v uv &> /dev/null; then
+    echo -e "${YELLOW}Installing uv...${NC}"
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    source $HOME/.local/bin/env
+    echo -e "${GREEN}✓ uv installed${NC}"
+else
+    echo -e "${GREEN}✓ uv is already installed${NC}"
+fi
+
+# Step 2: Check/Install Java
+echo -e "\n${YELLOW}Step 2: Checking Java installation...${NC}"
 if command -v java &> /dev/null; then
     JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
     echo -e "${GREEN}✓ Java is already installed: $JAVA_VERSION${NC}"
@@ -31,8 +42,8 @@ else
     echo -e "${GREEN}✓ Java installed${NC}"
 fi
 
-# Step 2: Download and Install Spark
-echo -e "\n${YELLOW}Step 2: Installing Apache Spark...${NC}"
+# Step 3: Download and Install Spark
+echo -e "\n${YELLOW}Step 3: Installing Apache Spark...${NC}"
 
 SPARK_VERSION="3.5.3"
 HADOOP_VERSION="3"
@@ -166,6 +177,14 @@ else
     fi
 fi
 
+# Step 8: Setup Python environment with uv
+echo -e "\n${YELLOW}Step 8: Setting up Python environment with uv...${NC}"
+uv venv
+source .venv/bin/activate
+uv pip install -e .
+uv pip install mcp-apache-spark-history-server
+echo -e "${GREEN}✓ Python environment updated with uv${NC}"
+
 # Summary
 echo -e "\n${GREEN}========================================${NC}"
 echo -e "${GREEN}✓ Spark Setup Complete!${NC}"
@@ -178,6 +197,8 @@ echo "3. View History Server: http://localhost:18080"
 echo "4. Update .env file in agent-spark directory:"
 echo "   SPARK_HISTORY_SERVER_URL=http://localhost:18080"
 echo "   USE_MOCK_DATA=false"
+echo "5. Run Spark Optimus Demo: uv run demo_agent.py"
+echo "6. Run AWS MCP Server: uv run -m mcp_apache_spark_history_server"
 echo ""
 echo -e "${YELLOW}Useful Commands:${NC}"
 echo "  Start History Server:  start-history-server.sh"
