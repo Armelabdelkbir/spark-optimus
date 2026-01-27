@@ -27,7 +27,7 @@ class ConfigAnalyzer:
                 print(f"Warning: Could not initialize OpenAI API: {e}")
     
     def _create_analysis_prompt(self, config: SparkConfig, metrics: Optional[ExecutionMetrics]) -> str:
-        """Create a detailed prompt for Gemini analysis."""
+        """Create a detailed prompt for OpenAI analysis."""
         prompt = f"""You are a Spark performance expert. Analyze the following Spark configuration and execution metrics, then provide specific recommendations.
 
 **Configuration Details:**
@@ -109,8 +109,8 @@ Be specific with numbers and provide actionable recommendations.
             bytes_value /= 1024.0
         return f"{bytes_value:.2f} PB"
     
-    def _parse_gemini_response(self, response_text: str) -> tuple[str, list[Recommendation]]:
-        """Parse Gemini response into summary and recommendations."""
+    def _parse_openai_response(self, response_text: str) -> tuple[str, list[Recommendation]]:
+        """Parse the OpenAI chat response into structured format."""
         recommendations = []
         summary = ""
         
@@ -201,7 +201,7 @@ Be specific with numbers and provide actionable recommendations.
                         {"role": "user", "content": prompt}
                     ]
                 )
-                summary, ai_recommendations = self._parse_gemini_response(response.choices[0].message.content)
+                summary, ai_recommendations = self._parse_openai_response(response.choices[0].message.content)
                 result.summary = summary
                 result.recommendations.extend(ai_recommendations)
             except Exception as e:
