@@ -10,6 +10,12 @@ if [ -f ".env" ]; then
     ENV_HIDDEN=true
 fi
 
+# 1b. Check if config exists
+if [ ! -f "config_aws.yaml" ]; then
+    echo "❌ Error: config_aws.yaml not found."
+    exit 1
+fi
+
 # Cleanup to restore .env
 cleanup() {
     if [ "$ENV_HIDDEN" = true ]; then
