@@ -10,7 +10,14 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 # Load environment variables
-load_dotenv()
+# We check for both .env and .env.aws_tmp because the AWS wrapper 
+# might have moved it to avoid config conflicts
+if os.path.exists(".env"):
+    load_dotenv(".env")
+elif os.path.exists(".env.aws_tmp"):
+    load_dotenv(".env.aws_tmp")
+elif os.path.exists(".env.bak"):
+    load_dotenv(".env.bak")
 
 class UnifiedSparkAgent:
     def __init__(self):
@@ -64,13 +71,21 @@ class UnifiedSparkAgent:
 
     async def start(self):
         """Initialize connections to all servers."""
-        # 1. Connect to Spark Optimus (Local)
-        # Handle machine portability by resolving uv path
-        uv_path = os.popen("which uv").read().strip() or "uv"
+        print("🚀 Initializing Unified Agent...")
+        
+        # Determine paths
+        cwd = os.getcwd()
+        uv_path = os.popen("which uv").read().strip() or "/home/armel/.local/bin/uv"
+        
+        # 1. Connect to Spark Optimus (Git/Config)
+        # We ensure PYTHONPATH includes CWD so the module is found
+        env = {**os.environ}
+        env["PYTHONPATH"] = f"{cwd}:{env.get('PYTHONPATH', '')}"
+        
         optimus_params = StdioServerParameters(
             command=uv_path,
             args=["run", "-m", "spark_config_mcp.server"],
-            env={**os.environ}
+            env=env
         )
         await self._connect_to_server("Spark Optimus (Git/Config)", optimus_params)
 
