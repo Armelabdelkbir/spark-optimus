@@ -27,8 +27,11 @@ trap cleanup EXIT
 # 2. Run the server in a PRISTINE environment
 # env -i ensures NO variables from the user session leak into the server
 export SHS_MCP_CONFIG="config_aws.yaml"
+# Resolve uvx path dynamically for portability on other machines
+UVX_PATH=$(which uvx || echo "uvx")
+
 env -i \
     HOME="$HOME" \
     PATH="$PATH" \
     SHS_MCP_CONFIG="$SHS_MCP_CONFIG" \
-    /home/armel/.local/bin/uvx --from mcp-apache-spark-history-server spark-mcp --config "$SHS_MCP_CONFIG"
+    "$UVX_PATH" --from mcp-apache-spark-history-server spark-mcp --config "$SHS_MCP_CONFIG"
