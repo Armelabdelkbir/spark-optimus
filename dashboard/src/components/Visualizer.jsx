@@ -3,11 +3,20 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
     PieChart, Pie, Cell, LineChart, Line
 } from 'recharts';
-import { Clock, AlertTriangle, CheckCircle, Database } from 'lucide-react';
+import { Clock, AlertTriangle, CheckCircle, Database, Zap } from 'lucide-react';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 const Visualizer = ({ toolName, data, onSelectApp }) => {
+    // Generic diagnostic logging for comparison tools to help fix zero-data issues
+    if (toolName && toolName.startsWith('compare_')) {
+        console.group(`📊 [Visualizer] Debugging: ${toolName}`);
+        console.log("Raw data object:", data);
+        const compData = (Array.isArray(data) && data.length > 0) ? data[0] : data;
+        console.log("Extracted compData:", compData);
+        console.log("Keys in compData:", Object.keys(compData || {}));
+        console.groupEnd();
+    }
     if (!data) return null;
 
     // 1. Applications List -> Table
@@ -433,25 +442,26 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
 
     // 12. Performance Comparison -> Side-by-Side Table
     if (toolName === 'compare_job_performance') {
-        const compData = Array.isArray(data) && data.length > 0 ? data[0] : data;
-        const summary = compData.summary_performance || {};
-        const app1 = summary.app1 || {};
-        const app2 = summary.app2 || {};
-        const comparison = summary.comparison || {};
+        const compData = (Array.isArray(data) && data.length > 0) ? data[0] : data;
+
+        // Very robust extraction - look for multiple possible key names
+        const summary = compData.executor_metrics || compData.summary_performance || compData.performance_summary || compData.summary || {};
+        const app1 = summary.app1 || compData.app1 || {};
+        const app2 = summary.app2 || compData.app2 || {};
+        const comparison = summary.comparison || compData.comparison || {};
 
         const metrics = [
             { id: 'total_duration', label: 'Duration (ms)' },
             { id: 'completed_tasks', label: 'Tasks Completed' },
             { id: 'total_executors', label: 'Executors' },
-            { id: 'total_shuffle_read', label: 'Shuffle Read (bytes)' },
-            { id: 'total_shuffle_write', label: 'Shuffle Write (bytes)' },
-            { id: 'total_gc_time', label: 'GC Time (ms)' },
-            { id: 'total_input_bytes', label: 'Input Data (bytes)' }
+            { id: 'total_shuffle_read', label: 'Shuffle Read (B)' },
+            { id: 'total_shuffle_write', label: 'Shuffle Write (B)' },
+            { id: 'total_gc_time', label: 'GC Time (ms)' }
         ];
 
         return (
             <div className="metrics-container">
-                <h3>📈 Performance Comparison</h3>
+                <h3>📈 Performance Analysis</h3>
                 <div className="table-responsive">
                     <table>
                         <thead>
@@ -459,22 +469,29 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
                                 <th>Metric</th>
                                 <th>App 1</th>
                                 <th>App 2</th>
-                                <th>Ratio (A2/A1)</th>
+                                <th>Ratio</th>
                             </tr>
                         </thead>
                         <tbody>
                             {metrics.map((m, idx) => {
-                                const v1 = app1[m.id];
-                                const v2 = app2[m.id];
-                                const ratioKey = `${m.id.replace('total_', '')}_ratio`;
-                                const ratio = comparison[ratioKey] || (v1 ? (v2 / v1).toFixed(2) : '1.0');
+                                // Try both full ID and short ID
+                                const shortId = m.id.replace('total_', '');
+                                const v1 = app1[m.id] !== undefined ? app1[m.id] : app1[shortId];
+                                const v2 = app2[m.id] !== undefined ? app2[m.id] : app2[shortId];
+
+                                const ratioKey = `${shortId}_ratio`;
+                                const ratioValue = comparison[ratioKey] || comparison[`${m.id}_ratio` || `ratio_${shortId}`];
+                                const ratio = ratioValue !== undefined ? ratioValue : (v1 && v1 !== 0 ? (v2 / v1).toFixed(2) : '1.0');
 
                                 return (
                                     <tr key={idx}>
-                                        <td style={{ fontWeight: 500 }}>{m.label}</td>
-                                        <td>{v1 !== undefined ? v1.toLocaleString() : '--'}</td>
-                                        <td>{v2 !== undefined ? v2.toLocaleString() : '--'}</td>
-                                        <td style={{ color: ratio < 0.9 ? '#00e676' : (ratio > 1.1 ? '#ff4444' : 'inherit'), fontWeight: 600 }}>
+                                        <td style={{ fontWeight: 600 }}>{m.label}</td>
+                                        <td>{v1 !== undefined && v1 !== null ? v1.toLocaleString() : '0'}</td>
+                                        <td>{v2 !== undefined && v2 !== null ? v2.toLocaleString() : '0'}</td>
+                                        <td style={{
+                                            color: parseFloat(ratio) < 0.95 ? '#00e676' : (parseFloat(ratio) > 1.05 ? '#ff4444' : 'inherit'),
+                                            fontWeight: 700
+                                        }}>
                                             {ratio}x
                                         </td>
                                     </tr>
@@ -483,29 +500,29 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
                         </tbody>
                     </table>
                 </div>
-
-                {/* Job Associations */}
-                <div style={{ marginTop: '1.5rem', opacity: 0.8, fontSize: '0.9rem' }}>
-                    <strong>Job Associations:</strong> App 1 succeeded in {compData.job_performance?.app1?.completed_count || 0} jobs, App 2 in {compData.job_performance?.app2?.completed_count || 0} jobs.
-                </div>
             </div>
         );
     }
 
     // 13. SQL Plan Comparison -> Side-by-Side Operator Counts
     if (toolName === 'compare_sql_execution_plans') {
-        const compData = Array.isArray(data) && data.length > 0 ? data[0] : data;
-        const planComp = compData.plan_comparison || {};
-        const ops = planComp.operator_comparison || {};
+        const compData = (Array.isArray(data) && data.length > 0) ? data[0] : data;
+
+        // Support both old and new schemas
+        const planComp = compData.plan_structure || compData.sql_comparison || compData.plan_comparison || compData || {};
+        const ops = planComp.node_type_comparison || planComp.operator_comparison || {};
         const complexity = planComp.complexity_metrics || {};
+
+        // If we still didn't find specific comparison data, don't show the table
+        if (!Object.keys(ops).length || ops === compData) return <EmptyState />;
 
         return (
             <div className="metrics-container">
                 <h3>🔍 SQL Operator Comparison</h3>
                 <div style={{ gridTemplateColumns: 'repeat(3, 1fr)', display: 'grid', gap: '1rem', marginBottom: '1.5rem' }}>
-                    <DetailCard label="Node Count Ratio" value={`${complexity.node_count_ratio || 1.0}x`} />
-                    <DetailCard label="Edge Count Ratio" value={`${complexity.edge_count_ratio || 1.0}x`} />
-                    <DetailCard label="Duration Ratio" value={`${complexity.duration_ratio || 1.0}x`} />
+                    <DetailCard label="Node Count Ratio" value={`${complexity.node_count_ratio || '1.0'}x`} />
+                    <DetailCard label="Edge Count Ratio" value={`${complexity.edge_count_ratio || '1.0'}x`} />
+                    <DetailCard label="Duration Ratio" value={`${complexity.duration_ratio || '1.0'}x`} />
                 </div>
 
                 <div className="table-responsive">
@@ -522,11 +539,11 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
                             {Object.entries(ops).map(([op, counts]) => {
                                 const diff = counts.app2_count - counts.app1_count;
                                 return (
-                                    <tr key={op} style={diff !== 0 ? { backgroundColor: 'rgba(0, 198, 255, 0.05)' } : {}}>
+                                    <tr key={op} style={diff !== 0 ? { backgroundColor: 'rgba(0, 198, 255, 0.08)' } : {}}>
                                         <td>{op}</td>
                                         <td>{counts.app1_count}</td>
                                         <td>{counts.app2_count}</td>
-                                        <td style={{ color: diff > 0 ? '#ff4444' : (diff < 0 ? '#00e676' : 'inherit') }}>
+                                        <td style={{ color: diff > 0 ? '#ff4444' : (diff < 0 ? '#00e676' : 'inherit'), fontWeight: 700 }}>
                                             {diff > 0 ? `+${diff}` : (diff < 0 ? diff : '0')}
                                         </td>
                                     </tr>
@@ -542,20 +559,23 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
     // Fallback: Raw JSON
     return (
         <div className="raw-json">
-            <div className="json-header">Raw Output</div>
+            <div className="json-header">Raw Output ({toolName})</div>
             <pre>{JSON.stringify(data, null, 2)}</pre>
         </div>
     );
 };
 
 const EmptyState = () => (
-    <div style={{ padding: 20, textAlign: 'center', opacity: 0.6 }}>No data available</div>
+    <div style={{ padding: 40, textAlign: 'center', opacity: 0.6 }}>
+        <Zap size={48} style={{ marginBottom: '1rem', opacity: 0.2 }} />
+        <div>No comparison data available for these applications.</div>
+    </div>
 );
 
 const DetailCard = ({ label, value }) => (
-    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
-        <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '0.25rem' }}>{label}</div>
-        <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--primary-glow)' }}>{value}</div>
+    <div style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+        <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary-glow)' }}>{value}</div>
     </div>
 );
 
