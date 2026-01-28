@@ -90,18 +90,23 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
             .sort((a, b) => new Date(a.submissionTime) - new Date(b.submissionTime))
             .map(j => {
                 const date = new Date(j.submissionTime);
+                const duration = j.duration || (j.completionTime && j.submissionTime ? (new Date(j.completionTime) - new Date(j.submissionTime)) : 0);
                 return {
                     id: `J${j.jobId}`,
                     time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                    duration: j.duration || 0,
+                    duration: duration,
                     tasks: j.numTasks || 0,
                     status: j.status
                 };
             }).slice(-30);
 
         // KPI Calculations
+        const totalDurationMs = jobs.reduce((sum, j) => {
+            const d = j.duration || (j.completionTime && j.submissionTime ? (new Date(j.completionTime) - new Date(j.submissionTime)) : 0);
+            return sum + d;
+        }, 0);
         const totalTasks = jobs.reduce((sum, j) => sum + (j.numTasks || 0), 0);
-        const avgDuration = (jobs.reduce((sum, j) => sum + (j.duration || 0), 0) / (jobs.length || 1) / 1000).toFixed(2);
+        const avgDuration = (totalDurationMs / (jobs.length || 1) / 1000).toFixed(2);
         const successRate = jobs.length ? ((jobs.filter(j => j.status === 'SUCCEEDED').length / jobs.length) * 100).toFixed(1) : 0;
 
         return (
