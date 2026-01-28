@@ -94,7 +94,7 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
                 return {
                     id: `J${j.jobId}`,
                     time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-                    duration: duration,
+                    duration: (duration / 1000).toFixed(2),
                     tasks: j.numTasks || 0,
                     status: j.status
                 };
@@ -135,12 +135,12 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
                                 <LineChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
                                     <XAxis dataKey="time" stroke="#666" fontSize={9} tickLine={false} />
-                                    <YAxis stroke="#4cc9f0" fontSize={9} tickLine={false} label={{ value: 'ms', angle: -90, position: 'insideLeft', fontSize: 9 }} />
+                                    <YAxis stroke="#4cc9f0" fontSize={9} tickLine={false} label={{ value: 's', angle: -90, position: 'insideLeft', fontSize: 9 }} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #444', borderRadius: '8px' }}
                                         itemStyle={{ fontSize: '12px' }}
                                     />
-                                    <Line type="monotone" dataKey="duration" stroke="var(--primary-glow)" strokeWidth={3} dot={{ r: 4, fill: 'var(--primary-glow)' }} activeDot={{ r: 6 }} name="Duration (ms)" />
+                                    <Line type="monotone" dataKey="duration" stroke="var(--primary-glow)" strokeWidth={3} dot={{ r: 4, fill: 'var(--primary-glow)' }} activeDot={{ r: 6 }} name="Duration (s)" />
                                 </LineChart>
                             </ResponsiveContainer>
                         </div>
