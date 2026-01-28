@@ -1,348 +1,122 @@
-# 🚀 Spark Configuration Analyzer - Agent-Based Evaluation System
+# ⚡ Spark Optimus Dashboard
+> **AI-Powered Analytics & Agentic Control for Apache Spark**
 
-An intelligent system that analyzes Apache Spark configurations from Git repositories and correlates them with real-time execution data from the Spark History Server. Built as an MCP (Model Context Protocol) server for seamless AI agent integration.
+![Spark Optimus Banner](https://img.shields.io/badge/Status-Beta-blue?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge) ![Stack](https://img.shields.io/badge/Tech-React_•_FastAPI_•_MCP-orange?style=for-the-badge)
 
-## 🎯 Features
-
-- **📄 Configuration Parsing**: Automatically parse `spark-defaults.conf` files and `spark-submit` scripts
-- **📊 Metrics Integration**: Fetch real-time execution data from Spark History Server REST API
-- **🤖 AI-Powered Analysis**: Use OpenAI to generate intelligent recommendations
-- **🔍 Rule-Based Validation**: Built-in heuristics for common Spark anti-patterns
-- **🎭 Demo Mode**: Works standalone with mock data for presentations
-- **🔧 MCP Server**: Expose tools for AI agents to interact with Spark configurations
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐
-│  Git Repository │
-│  (Spark Configs)│
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐      ┌──────────────────┐
-│  Config Parser  │      │ History Server   │
-│                 │      │  REST API        │
-└────────┬────────┘      └────────┬─────────┘
-         │                        │
-         └────────┬───────────────┘
-                  ▼
-         ┌────────────────┐
-         │   MCP Server   │
-         │  (4 Tools)     │
-         └────────┬───────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │   AI Agent     │
-         │   (OpenAI)     │
-         └────────┬───────┘
-                  │
-                  ▼
-         ┌────────────────┐
-         │ Recommendations│
-         └────────────────┘
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.10+
-- (Optional) Google AI API key for Gemini
-- (Optional) Access to Spark History Server
-
-### Installation
-
-```bash
-# Clone or navigate to the project
-cd agent-spark
-
-# Install uv if you don't have it
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Install dependencies and setup environment
-uv venv
-source .venv/bin/activate
-uv pip install -e .
-
-# (Optional) Set up environment variables
-cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
-```
-
-### Run the Demo
-
-```bash
-# Run the standalone demo
-uv run demo_agent.py
-```
-
-This will:
-1. Parse the sample `deploy_job.sh` script
-2. Parse the `spark-defaults.conf` file
-3. Fetch mock execution metrics
-4. Generate AI-powered recommendations
-
-### Run as MCP Server
-
-```bash
-# Start the MCP server
-uv run -m spark_config_mcp.server
-```
-
-The server exposes 4 tools for AI agents:
-- `parse_spark_config` - Parse configuration files
-- `fetch_app_metrics` - Get execution metrics
-- `analyze_configuration` - Full analysis with OpenAI
-- `get_recommendations` - Filtered recommendations
-
-## 📚 MCP Tools Documentation
-
-### 1. parse_spark_config
-
-Parse Spark configuration files from a repository or file.
-
-**Input:**
-```json
-{
-  "path": "/path/to/config/file",
-  "file_type": "auto"  // auto, spark-defaults, spark-submit, directory
-}
-```
-
-**Output:**
-```json
-{
-  "success": true,
-  "config": {
-    "source_file": "deploy_job.sh",
-    "driver_memory": "20g",
-    "executor_memory": "8g",
-    "executor_cores": 4,
-    "num_executors": 10,
-    ...
-  }
-}
-```
-
-### 2. fetch_app_metrics
-
-Fetch execution metrics from Spark History Server.
-
-**Input:**
-```json
-{
-  "app_identifier": "app-20260126-001",  // or app name pattern
-  "use_mock": true
-}
-```
-
-**Output:**
-```json
-{
-  "success": true,
-  "metrics": {
-    "app_id": "app-20260126-001",
-    "duration_ms": 1800000,
-    "total_tasks": 500,
-    "executor_memory_spilled": 5368709120,
-    ...
-  }
-}
-```
-
-### 3. analyze_configuration
-
-Perform comprehensive analysis with AI.
-
-**Input:**
-```json
-{
-  "config_path": "/path/to/config",
-  "app_identifier": "Production_Pipeline",  // optional
-  "use_mock_metrics": true
-}
-```
-
-**Output:**
-```json
-{
-  "success": true,
-  "analysis": {
-    "summary": "Configuration has critical issues...",
-    "recommendations": [
-      {
-        "severity": "critical",
-        "category": "resource_allocation",
-        "title": "Excessive Driver Memory",
-        "current_value": "20g",
-        "recommended_value": "4g",
-        "expected_impact": "Reduce costs by 75%"
-      }
-    ]
-  }
-}
-```
-
-### 4. get_recommendations
-
-Get filtered, prioritized recommendations.
-
-**Input:**
-```json
-{
-  "config_path": "/path/to/config",
-  "severity_filter": "critical",  // all, critical, warning, info
-  "category_filter": "all"  // all, resource_allocation, performance_tuning, etc.
-}
-```
-
-## 🎯 Use Cases
-
-### Hackathon Demo
-
-Perfect for demonstrating:
-- ✅ Works without real Spark cluster
-- ✅ Mock data included
-- ✅ Instant analysis results
-- ✅ Visual recommendations
-
-### Real-World Integration
-
-Connect to production systems:
-1. Set `SPARK_HISTORY_SERVER_URL` to your History Server
-2. Set `USE_MOCK_DATA=false`
-3. Point to your Git repository with Spark configs
-4. Get real-time recommendations
-
-### CI/CD Integration
-
-Add to your pipeline:
-```bash
-# Analyze configs before deployment
-python -c "
-from spark_config_mcp.spark_config_parser import SparkConfigParser
-from spark_config_mcp.config_analyzer import ConfigAnalyzer
-
-parser = SparkConfigParser()
-analyzer = ConfigAnalyzer()
-
-config = parser.parse_file('deploy_job.sh')
-analysis = analyzer.analyze(config)
-
-critical = [r for r in analysis.recommendations if r.severity.value == 'critical']
-if critical:
-    print('CRITICAL ISSUES FOUND!')
-    exit(1)
-"
-# Start the AWS Community MCP for Spark
-uv run -m mcp_apache_spark_history_server
-```
-
-## 📁 Project Structure
-
-```
-agent-spark/
-├── spark_config_mcp/          # Main package
-│   ├── __init__.py
-│   ├── server.py              # MCP server
-│   ├── models.py              # Data models
-│   ├── spark_config_parser.py # Config parser
-│   ├── history_server_client.py # API client
-│   └── config_analyzer.py     # AI analyzer
-├── demo_repo/                 # Sample configs
-│   ├── deploy_job.sh          # Spark-submit script
-│   └── spark-defaults.conf    # Config file
-├── mock_data/                 # Demo data
-│   └── history_server_response.json
-├── demo_agent.py              # Standalone demo
-├── requirements.txt
-├── pyproject.toml
-└── README.md
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-- `OPENAI_API_KEY` - OpenAI API key (optional, enables AI analysis)
-- `SPARK_HISTORY_SERVER_URL` - History Server URL (default: `http://localhost:18080`)
-- `USE_MOCK_DATA` - Use mock data (default: `true`)
-
-## 🎨 Example Output
-
-```
-🔴 CRITICAL ISSUES:
-
-   Excessive Driver Memory
-   Category: resource_allocation
-   Current: 20g
-   Recommended: 4g
-   Impact: Reduce resource waste and costs by 75%
-
-⚠️  WARNINGS:
-
-   Inefficient Shuffle Partitions
-   Category: performance_tuning
-   Current: 200
-   Recommended: 50-100
-   Impact: Reduce shuffle overhead by 30-40%
-
-💡 SUGGESTIONS:
-
-   Enable Dynamic Allocation
-   Category: best_practices
-   Current: false
-   Recommended: true
-   Impact: Better resource utilization and cost savings
-```
-
-## 🤝 Contributing
-
-This is a hackathon project! Feel free to:
-- Add more rule-based checks
-- Improve AI prompts
-- Add support for more config formats
-- Enhance the demo
-
-## 📝 License
-
-MIT License - feel free to use for your hackathon or production!
-
-## 🎓 Hackathon Tips
-
-### Presentation Points
-
-1. **Problem**: Spark configs are complex, often misconfigured, wasting resources
-2. **Solution**: AI-powered analysis that correlates configs with actual performance
-3. **Innovation**: MCP server enables any AI agent to analyze Spark configs
-4. **Impact**: Reduce cloud costs, improve performance, prevent issues
-
-### Demo Flow
-
-1. Show the bad config (`deploy_job.sh` with 20GB driver memory)
-2. Run the analyzer
-3. Show critical recommendations
-4. Explain the cost/performance impact
-5. (Bonus) Show MCP server integration with AI agent
-
-### Key Differentiators
-
-- ✅ **Agent-based**: Works with any AI agent via MCP
-- ✅ **Correlation**: Links configs to actual execution metrics
-- ✅ **Actionable**: Specific recommendations, not just warnings
-- ✅ **Production-ready**: Works with real History Server
-- ✅ **Demo-friendly**: Mock data for presentations
-
-## 🚀 Next Steps
-
-1. **Add more parsers**: Support for Databricks notebooks, EMR configs
-2. **Historical analysis**: Track config changes over time
-3. **Cost estimation**: Calculate actual $ savings
-4. **Auto-fix**: Generate optimized configs automatically
-5. **Dashboard**: Web UI for visualization
+**Spark Optimus** is a next-generation observability and intelligence platform for Apache Spark. It combines a high-performance React dashboard with an **MCP (Model Context Protocol)** backend to allow AI agents to inspect, analyze, and optimize Spark jobs in real-time.
 
 ---
 
-**Built for hackathons, ready for production!** 🎉
+## 🚀 Features
+
+- **📊 Real-Time Observability**: View Applications, Jobs, Stages, and Executors with live status updates.
+- **🤖 Agentic AI Integration**: Built on the **Model Context Protocol (MCP)**, enabling Claude/Gemini agents to directly interact with your Spark cluster.
+- **⚡ Resource Strategy Dashboard**: Visualize dynamic allocation, executor churn, and peak resource usage.
+- **🐢 Bottleneck Detection**: Automatically identify slow tasks, skew, and inefficient SQL queries.
+- **💡 Smart Insights**: Get auto-generated efficiency scores and recommendations.
+
+---
+
+## 🛠️ Architecture
+
+```mermaid
+graph TD
+    subgraph Client ["🤖 Agentic Layer"]
+        User[User / Demo]
+        Agent[AI Agent (Claude/Gemini)]
+    end
+
+    subgraph Core ["⚡ Spark Optimus Core"]
+        Dashboard[React Dashboard]
+        Bridge[MCP Bridge Server]
+        Tools[Tool Definitions]
+    end
+
+    subgraph Infrastructure ["☁️ Infrastructure"]
+        SHS[Spark History Server]
+        Logs[Event Logs (S3/HDFS)]
+        Cluster[Spark Cluster]
+    end
+
+    User -->|View| Dashboard
+    Agent -->|MCP Protocol| Bridge
+    Dashboard -->|WebSocket/API| Bridge
+    Bridge -->|Calls| Tools
+    Tools -->|REST API| SHS
+    SHS -->|Reads| Logs
+    Cluster -->|Writes| Logs
+```
+
+---
+
+## 🏁 Quick Start (Demo Mode)
+
+Follow these steps to set up the full stack on a new machine for a demo.
+
+### 1️⃣ Prerequisites
+
+Ensure you have the following installed:
+*   **Node.js 18+** & `npm`
+*   **Python 3.10+**
+*   **uv** (The ultra-fast Python package manager)
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    ```
+
+### 2️⃣ Clone & Setup
+
+```bash
+git clone https://github.com/your-repo/agent-spark.git
+cd agent-spark
+
+# Create a virtual environment (optional but recommended)
+uv venv
+source .venv/bin/activate
+```
+
+### 3️⃣ Configuration
+
+Create a `.env` file (or just use the example for the demo):
+```bash
+cp .env.example .env
+```
+*Note: The demo runs with **mock data** by default, so you don't need a real Spark cluster running!*
+
+### 4️⃣ 🚀 Launch Everything!
+
+We have a "turbo" script that launches the MCP Server, the Backend Bridge, and the Frontend Dashboard all at once.
+
+```bash
+./run_full_system.sh
+```
+
+**Access the Dashboard:**
+👉 **[http://localhost:5173](http://localhost:5173)**
+
+---
+
+## 🎮 Demo Walkthrough
+
+1.  **Landing Page**: Open the dashboard. You'll see the **Applications** list populated with demo data.
+2.  **Drill Down**: Click on `TestJob_BadConfig_Demo`.
+3.  **Job Analysis**: Go to the **Job Analysis** tab to see the Gantt chart of job execution.
+4.  **Resource Strategy**: Switch to **Intelligence** -> **Resource Usage** to see the **new KPI Cards** and Efficiency insights.
+5.  **Agent Integration**: Explain that all data fetching is happening via **MCP Tool Calls**, meaning an AI agent could be doing this fully autonomously.
+
+---
+
+## 🐛 Troubleshooting
+
+*   **Ports in use?**
+    The script tries to kill processes on ports `18888`, `18889`, and `5173`. If it fails, manually check:
+    ```bash
+    lsof -i :18888
+    kill -9 <PID>
+    ```
+
+*   **No Data?**
+    Ensure the `mock_data` folder exists and `USE_MOCK_DATA=true` is set in your environment or config.
+
+---
+
+*Built with ❤️ for the Agentic AI Hackathon.*

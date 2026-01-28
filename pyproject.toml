@@ -9,9 +9,13 @@ description = "Agent-based evaluation of Spark configurations with MCP server"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "fastapi",
+    "httpx",
     "mcp>=1.0.0",
     "openai>=1.0.0",
     "requests>=2.31.0",
+    "sse-starlette",
+    "uvicorn",
 ]
 
 [project.scripts]

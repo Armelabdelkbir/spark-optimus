@@ -4,5 +4,6 @@ servers:
     default: true
 
 mcp:
-  transports: ["stdio"]
+  transports: ["streamable-http"]
+  port: "18888"
   debug: false
