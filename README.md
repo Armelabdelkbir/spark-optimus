@@ -17,35 +17,7 @@
 
 ---
 
-## 🛠️ Architecture
 
-```mermaid
-graph TD
-    subgraph Client ["🤖 Agentic Layer"]
-        User[User / Demo]
-        Agent[AI Agent (Claude/Gemini)]
-    end
-
-    subgraph Core ["⚡ Spark Optimus Core"]
-        Dashboard[React Dashboard]
-        Bridge[MCP Bridge Server]
-        Tools[Tool Definitions]
-    end
-
-    subgraph Infrastructure ["☁️ Infrastructure"]
-        SHS[Spark History Server]
-        Logs[Event Logs (S3/HDFS)]
-        Cluster[Spark Cluster]
-    end
-
-    User -->|View| Dashboard
-    Agent -->|MCP Protocol| Bridge
-    Dashboard -->|WebSocket/API| Bridge
-    Bridge -->|Calls| Tools
-    Tools -->|REST API| SHS
-    SHS -->|Reads| Logs
-    Cluster -->|Writes| Logs
-```
 
 ---
 
