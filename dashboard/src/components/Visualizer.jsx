@@ -367,18 +367,16 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
     if (toolName === 'compare_job_environments') {
         const compData = Array.isArray(data) && data.length > 0 ? data[0] : data;
         const sparkProps = compData.spark_properties || {};
-        const diffProps = sparkProps.different || {};
-        const allProps = sparkProps.all_properties || {};
-        const keys = Object.keys(allProps);
 
-        if (!keys.length) return <EmptyState />;
+        // Merge common and different for a unified view
+        const common = sparkProps.common || {};
+        const different = sparkProps.different || {};
+        const only1 = sparkProps.only_in_app1 || {};
+        const only2 = sparkProps.only_in_app2 || {};
 
         return (
             <div className="metrics-container">
                 <h3>⚖️ Environment Comparison</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '1rem' }}>
-                    Comparing Spark configurations. Differences are highlighted in <span style={{ color: '#FFBB28' }}>yellow</span>.
-                </p>
                 <div className="table-responsive">
                     <table>
                         <thead>
@@ -386,23 +384,46 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
                                 <th>Property</th>
                                 <th>App 1</th>
                                 <th>App 2</th>
-                                <th>Diff</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {keys.map((key, idx) => {
-                                const val1 = allProps[key].app1;
-                                const val2 = allProps[key].app2;
-                                const isDifferent = diffProps[key] !== undefined;
-                                return (
-                                    <tr key={idx} style={isDifferent ? { backgroundColor: 'rgba(255, 187, 40, 0.1)' } : {}}>
-                                        <td className="code-font" style={{ fontSize: '0.75rem' }}>{key}</td>
-                                        <td>{val1}</td>
-                                        <td>{val2}</td>
-                                        <td>{isDifferent ? '⚠️' : '✅'}</td>
-                                    </tr>
-                                );
-                            })}
+                            {/* Different Properties First */}
+                            {Object.keys(different).map(key => (
+                                <tr key={key} style={{ backgroundColor: 'rgba(255, 187, 40, 0.1)' }}>
+                                    <td className="code-font">{key}</td>
+                                    <td>{different[key].app1}</td>
+                                    <td>{different[key].app2}</td>
+                                    <td>⚠️ Changed</td>
+                                </tr>
+                            ))}
+                            {/* Only in App 1 */}
+                            {Object.keys(only1).map(key => (
+                                <tr key={key} style={{ backgroundColor: 'rgba(255, 68, 68, 0.05)' }}>
+                                    <td className="code-font">{key}</td>
+                                    <td>{only1[key]}</td>
+                                    <td>--</td>
+                                    <td>❌ Missing</td>
+                                </tr>
+                            ))}
+                            {/* Only in App 2 */}
+                            {Object.keys(only2).map(key => (
+                                <tr key={key} style={{ backgroundColor: 'rgba(0, 230, 118, 0.05)' }}>
+                                    <td className="code-font">{key}</td>
+                                    <td>--</td>
+                                    <td>{only2[key]}</td>
+                                    <td>✨ New</td>
+                                </tr>
+                            ))}
+                            {/* Common Properties */}
+                            {Object.keys(common).map(key => (
+                                <tr key={key} style={{ opacity: 0.6 }}>
+                                    <td className="code-font">{key}</td>
+                                    <td>{common[key].app1}</td>
+                                    <td>{common[key].app2}</td>
+                                    <td>✅ Same</td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>
@@ -419,12 +440,13 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
         const comparison = summary.comparison || {};
 
         const metrics = [
-            { id: 'total_duration', label: 'Total Duration (ms)', format: v => v },
-            { id: 'task_count', label: 'Tasks Count', format: v => v },
-            { id: 'executor_count', label: 'Executors', format: v => v },
-            { id: 'total_shuffle_read', label: 'Shuffle Read (bytes)', format: v => v },
-            { id: 'total_shuffle_write', label: 'Shuffle Write (bytes)', format: v => v },
-            { id: 'total_gc_time', label: 'Total GC Time (ms)', format: v => v }
+            { id: 'total_duration', label: 'Duration (ms)' },
+            { id: 'completed_tasks', label: 'Tasks Completed' },
+            { id: 'total_executors', label: 'Executors' },
+            { id: 'total_shuffle_read', label: 'Shuffle Read (bytes)' },
+            { id: 'total_shuffle_write', label: 'Shuffle Write (bytes)' },
+            { id: 'total_gc_time', label: 'GC Time (ms)' },
+            { id: 'total_input_bytes', label: 'Input Data (bytes)' }
         ];
 
         return (
@@ -449,10 +471,10 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
 
                                 return (
                                     <tr key={idx}>
-                                        <td>{m.label}</td>
-                                        <td>{m.format(v1)}</td>
-                                        <td>{m.format(v2)}</td>
-                                        <td style={{ color: ratio < 1 ? '#00C49F' : (ratio > 1.1 ? '#FF8042' : 'inherit'), fontWeight: 600 }}>
+                                        <td style={{ fontWeight: 500 }}>{m.label}</td>
+                                        <td>{v1 !== undefined ? v1.toLocaleString() : '--'}</td>
+                                        <td>{v2 !== undefined ? v2.toLocaleString() : '--'}</td>
+                                        <td style={{ color: ratio < 0.9 ? '#00e676' : (ratio > 1.1 ? '#ff4444' : 'inherit'), fontWeight: 600 }}>
                                             {ratio}x
                                         </td>
                                     </tr>
@@ -461,29 +483,57 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Job Associations */}
+                <div style={{ marginTop: '1.5rem', opacity: 0.8, fontSize: '0.9rem' }}>
+                    <strong>Job Associations:</strong> App 1 succeeded in {compData.job_performance?.app1?.completed_count || 0} jobs, App 2 in {compData.job_performance?.app2?.completed_count || 0} jobs.
+                </div>
             </div>
         );
     }
 
-    // 13. SQL Plan Comparison -> Split View
+    // 13. SQL Plan Comparison -> Side-by-Side Operator Counts
     if (toolName === 'compare_sql_execution_plans') {
         const compData = Array.isArray(data) && data.length > 0 ? data[0] : data;
+        const planComp = compData.plan_comparison || {};
+        const ops = planComp.operator_comparison || {};
+        const complexity = planComp.complexity_metrics || {};
+
         return (
             <div className="metrics-container">
-                <h3>🔍 SQL Plan Comparison</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div className="card" style={{ background: '#000', padding: '1rem' }}>
-                        <h4 style={{ color: 'var(--primary-glow)' }}>Plan 1</h4>
-                        <pre style={{ fontSize: '0.75rem', overflow: 'auto', maxHeight: '400px', whiteSpace: 'pre-wrap' }}>
-                            {compData.plan1 || 'No plan data'}
-                        </pre>
-                    </div>
-                    <div className="card" style={{ background: '#000', padding: '1rem' }}>
-                        <h4 style={{ color: 'var(--primary-glow)' }}>Plan 2</h4>
-                        <pre style={{ fontSize: '0.75rem', overflow: 'auto', maxHeight: '400px', whiteSpace: 'pre-wrap' }}>
-                            {compData.plan2 || 'No plan data'}
-                        </pre>
-                    </div>
+                <h3>🔍 SQL Operator Comparison</h3>
+                <div style={{ gridTemplateColumns: 'repeat(3, 1fr)', display: 'grid', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <DetailCard label="Node Count Ratio" value={`${complexity.node_count_ratio || 1.0}x`} />
+                    <DetailCard label="Edge Count Ratio" value={`${complexity.edge_count_ratio || 1.0}x`} />
+                    <DetailCard label="Duration Ratio" value={`${complexity.duration_ratio || 1.0}x`} />
+                </div>
+
+                <div className="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Operator Type</th>
+                                <th>App 1 Count</th>
+                                <th>App 2 Count</th>
+                                <th>Diff</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {Object.entries(ops).map(([op, counts]) => {
+                                const diff = counts.app2_count - counts.app1_count;
+                                return (
+                                    <tr key={op} style={diff !== 0 ? { backgroundColor: 'rgba(0, 198, 255, 0.05)' } : {}}>
+                                        <td>{op}</td>
+                                        <td>{counts.app1_count}</td>
+                                        <td>{counts.app2_count}</td>
+                                        <td style={{ color: diff > 0 ? '#ff4444' : (diff < 0 ? '#00e676' : 'inherit') }}>
+                                            {diff > 0 ? `+${diff}` : (diff < 0 ? diff : '0')}
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         );
