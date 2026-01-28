@@ -1,4 +1,5 @@
 #!/bin/bash
+export PATH=$PATH:/home/armel/.local/bin
 # Definitive Full Stack Script for Spark Optimus
 
 # Cleanup existing

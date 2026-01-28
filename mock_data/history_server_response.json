@@ -130,6 +130,52 @@
                 "diskBytesSpilled": 0,
                 "peakExecutionMemory": 5368709120
             }
+        },
+        {
+            "id": "local-1769440266103",
+            "name": "Optimization_Test_Run_v2",
+            "attempts": [
+                {
+                    "startTime": "2026-01-26T14:40:00.000Z",
+                    "endTime": "2026-01-26T15:00:00.000Z",
+                    "duration": 1200000,
+                    "sparkUser": "spark",
+                    "completed": true
+                }
+            ],
+            "executorSummary": {
+                "memoryUsed": 42949672960,
+                "diskUsed": 2147483648,
+                "totalCores": 40,
+                "maxMemory": 85899345920
+            },
+            "stages": [
+                {
+                    "stageId": 0,
+                    "name": "Read Input Data",
+                    "status": "COMPLETE",
+                    "numTasks": 50,
+                    "numFailedTasks": 0,
+                    "inputBytes": 53687091200,
+                    "outputBytes": 0,
+                    "shuffleReadBytes": 0,
+                    "shuffleWriteBytes": 12106127360,
+                    "memoryBytesSpilled": 128435456,
+                    "diskBytesSpilled": 0
+                }
+            ],
+            "metrics": {
+                "executorRunTime": 1000000,
+                "executorCpuTime": 900000,
+                "executorDeserializeTime": 5000,
+                "executorDeserializeCpuTime": 4000,
+                "resultSize": 1024,
+                "jvmGCTime": 50000,
+                "resultSerializationTime": 100,
+                "memoryBytesSpilled": 1284354560,
+                "diskBytesSpilled": 0,
+                "peakExecutionMemory": 40530636800
+            }
         }
     ]
 }

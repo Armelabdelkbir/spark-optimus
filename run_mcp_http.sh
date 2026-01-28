@@ -1,4 +1,5 @@
 #!/bin/bash
+export PATH=$PATH:/home/armel/.local/bin
 # Simple script to run the official Kubeflow Spark History MCP server over HTTP
 
 # Check if uv is installed

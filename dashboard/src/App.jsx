@@ -39,13 +39,23 @@ const App = () => {
       setLastTool(toolName);
 
       const args = {};
+      const comparisonTools = ['compare_job_environments', 'compare_job_performance', 'compare_sql_execution_plans'];
       const needsAppId = [
         'get_application', 'list_jobs', 'list_slowest_jobs', 'list_stages', 'list_slowest_stages',
         'get_job_bottlenecks', 'get_resource_usage_timeline', 'list_slowest_sql_queries',
         'compare_sql_execution_plans', 'get_executor', 'get_executor_summary', 'get_stage'
       ].includes(toolName);
 
-      if (needsAppId) {
+      if (comparisonTools.includes(toolName)) {
+        const id1 = prompt("Enter First Application ID:");
+        const id2 = prompt("Enter Second Application ID:");
+        if (!id1 || !id2) {
+          setExecuting(false);
+          return;
+        }
+        args.app_id1 = id1;
+        args.app_id2 = id2;
+      } else if (needsAppId) {
         if (!selectedAppId) {
           const id = prompt("Please enter Application ID (e.g. local-1769...):");
           if (!id) {
@@ -85,7 +95,8 @@ const App = () => {
     applications: { label: 'Applications', icon: <Database size={20} />, tools: ['list_applications', 'get_application', 'get_environment'] },
     jobs: { label: 'Job Analysis', icon: <Activity size={20} />, tools: ['list_jobs', 'list_slowest_jobs', 'list_executors', 'get_executor_summary'] },
     stages: { label: 'Stage Deep-Dive', icon: <Zap size={20} />, tools: ['list_stages', 'list_slowest_stages', 'get_stage'] },
-    optimization: { label: 'Intelligence', icon: <LayoutDashboard size={20} />, tools: ['get_job_bottlenecks', 'get_resource_usage_timeline', 'list_slowest_sql_queries'] }
+    optimization: { label: 'Intelligence', icon: <LayoutDashboard size={20} />, tools: ['get_job_bottlenecks', 'get_resource_usage_timeline', 'list_slowest_sql_queries'] },
+    comparison: { label: 'Comparison', icon: <RefreshCcw size={20} />, tools: ['compare_job_environments', 'compare_job_performance', 'compare_sql_execution_plans'] }
   };
 
   // Connection Error Screen

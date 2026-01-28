@@ -363,6 +363,132 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
         );
     }
 
+    // 11. Environment Comparison -> Side-by-Side Table
+    if (toolName === 'compare_job_environments') {
+        const compData = Array.isArray(data) && data.length > 0 ? data[0] : data;
+        const sparkProps = compData.spark_properties || {};
+        const diffProps = sparkProps.different || {};
+        const allProps = sparkProps.all_properties || {};
+        const keys = Object.keys(allProps);
+
+        if (!keys.length) return <EmptyState />;
+
+        return (
+            <div className="metrics-container">
+                <h3>⚖️ Environment Comparison</h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '1rem' }}>
+                    Comparing Spark configurations. Differences are highlighted in <span style={{ color: '#FFBB28' }}>yellow</span>.
+                </p>
+                <div className="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Property</th>
+                                <th>App 1</th>
+                                <th>App 2</th>
+                                <th>Diff</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {keys.map((key, idx) => {
+                                const val1 = allProps[key].app1;
+                                const val2 = allProps[key].app2;
+                                const isDifferent = diffProps[key] !== undefined;
+                                return (
+                                    <tr key={idx} style={isDifferent ? { backgroundColor: 'rgba(255, 187, 40, 0.1)' } : {}}>
+                                        <td className="code-font" style={{ fontSize: '0.75rem' }}>{key}</td>
+                                        <td>{val1}</td>
+                                        <td>{val2}</td>
+                                        <td>{isDifferent ? '⚠️' : '✅'}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    }
+
+    // 12. Performance Comparison -> Side-by-Side Table
+    if (toolName === 'compare_job_performance') {
+        const compData = Array.isArray(data) && data.length > 0 ? data[0] : data;
+        const summary = compData.summary_performance || {};
+        const app1 = summary.app1 || {};
+        const app2 = summary.app2 || {};
+        const comparison = summary.comparison || {};
+
+        const metrics = [
+            { id: 'total_duration', label: 'Total Duration (ms)', format: v => v },
+            { id: 'task_count', label: 'Tasks Count', format: v => v },
+            { id: 'executor_count', label: 'Executors', format: v => v },
+            { id: 'total_shuffle_read', label: 'Shuffle Read (bytes)', format: v => v },
+            { id: 'total_shuffle_write', label: 'Shuffle Write (bytes)', format: v => v },
+            { id: 'total_gc_time', label: 'Total GC Time (ms)', format: v => v }
+        ];
+
+        return (
+            <div className="metrics-container">
+                <h3>📈 Performance Comparison</h3>
+                <div className="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>App 1</th>
+                                <th>App 2</th>
+                                <th>Ratio (A2/A1)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {metrics.map((m, idx) => {
+                                const v1 = app1[m.id];
+                                const v2 = app2[m.id];
+                                const ratioKey = `${m.id.replace('total_', '')}_ratio`;
+                                const ratio = comparison[ratioKey] || (v1 ? (v2 / v1).toFixed(2) : '1.0');
+
+                                return (
+                                    <tr key={idx}>
+                                        <td>{m.label}</td>
+                                        <td>{m.format(v1)}</td>
+                                        <td>{m.format(v2)}</td>
+                                        <td style={{ color: ratio < 1 ? '#00C49F' : (ratio > 1.1 ? '#FF8042' : 'inherit'), fontWeight: 600 }}>
+                                            {ratio}x
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    }
+
+    // 13. SQL Plan Comparison -> Split View
+    if (toolName === 'compare_sql_execution_plans') {
+        const compData = Array.isArray(data) && data.length > 0 ? data[0] : data;
+        return (
+            <div className="metrics-container">
+                <h3>🔍 SQL Plan Comparison</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="card" style={{ background: '#000', padding: '1rem' }}>
+                        <h4 style={{ color: 'var(--primary-glow)' }}>Plan 1</h4>
+                        <pre style={{ fontSize: '0.75rem', overflow: 'auto', maxHeight: '400px', whiteSpace: 'pre-wrap' }}>
+                            {compData.plan1 || 'No plan data'}
+                        </pre>
+                    </div>
+                    <div className="card" style={{ background: '#000', padding: '1rem' }}>
+                        <h4 style={{ color: 'var(--primary-glow)' }}>Plan 2</h4>
+                        <pre style={{ fontSize: '0.75rem', overflow: 'auto', maxHeight: '400px', whiteSpace: 'pre-wrap' }}>
+                            {compData.plan2 || 'No plan data'}
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     // Fallback: Raw JSON
     return (
         <div className="raw-json">
