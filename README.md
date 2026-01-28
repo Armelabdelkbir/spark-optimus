@@ -44,6 +44,14 @@ cd agent-spark
 # Create a virtual environment (optional but recommended)
 uv venv
 source .venv/bin/activate
+
+# Install backend dependencies
+uv pip install -e .
+
+# Install frontend dependencies
+cd dashboard
+npm install
+cd ..
 ```
 
 ### 3️⃣ Configuration
