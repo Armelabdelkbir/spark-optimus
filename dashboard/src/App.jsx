@@ -92,11 +92,11 @@ const App = () => {
 
   // Tool categories for the sidebar and grid
   const categories = {
-    applications: { label: 'Applications', icon: <Database size={20} />, tools: ['list_applications', 'get_application', 'get_environment'] },
-    jobs: { label: 'Job Analysis', icon: <Activity size={20} />, tools: ['list_jobs', 'list_slowest_jobs', 'list_executors', 'get_executor_summary'] },
-    stages: { label: 'Stage Deep-Dive', icon: <Zap size={20} />, tools: ['list_stages', 'list_slowest_stages', 'get_stage'] },
-    optimization: { label: 'Intelligence', icon: <LayoutDashboard size={20} />, tools: ['get_job_bottlenecks', 'get_resource_usage_timeline', 'list_slowest_sql_queries'] },
-    comparison: { label: 'Comparison', icon: <RefreshCcw size={20} />, tools: ['compare_job_environments', 'compare_job_performance', 'compare_sql_execution_plans'] }
+    applications: { label: 'Applications', icon: <Monitor size={20} />, tools: ['list_applications', 'get_application', 'get_environment'] },
+    jobs: { label: 'Jobs', icon: <Activity size={20} />, tools: ['list_jobs', 'list_slowest_jobs', 'list_executors', 'get_executor_summary'] },
+    stages: { label: 'Stages', icon: <Zap size={20} />, tools: ['list_stages', 'list_slowest_stages', 'get_stage'] },
+    optimization: { label: 'Optimization', icon: <LayoutDashboard size={20} color="#ff007f" />, tools: ['get_job_bottlenecks', 'get_resource_usage_timeline', 'list_slowest_sql_queries'] },
+    comparison: { label: 'Comparison', icon: <RefreshCcw size={20} color="var(--battle-gold)" />, tools: ['compare_job_environments', 'compare_job_performance', 'compare_sql_execution_plans'] }
   };
 
   // Connection Error Screen
@@ -133,7 +133,7 @@ const App = () => {
           </div>
           <div>
             <h1 style={{ fontSize: '1.1rem', fontWeight: 700, letterSpacing: '-0.02em', margin: 0 }}>Spark Optimus</h1>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginTop: '2px' }}>AI-Powered Analytics</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--primary-glow)', marginTop: '2px', fontWeight: 600, letterSpacing: '0.05em' }}>MCP-Native Performance Hub</div>
           </div>
         </div>
 
@@ -178,7 +178,10 @@ const App = () => {
 
           <div className="nav-group">
             <span className="nav-label">System</span>
-            <div className="nav-item">
+            <div
+              className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('settings')}
+            >
               <Settings size={20} />
               <span>Settings</span>
             </div>
@@ -188,25 +191,70 @@ const App = () => {
 
       {/* Main Content */}
       <main className="main-content">
-        {/* Tool Grid */}
+        {/* Tool Grid / Settings View */}
         <section style={{ marginBottom: '3rem' }}>
           <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Terminal size={18} color="var(--primary-glow)" />
-            {categories[activeTab]?.label || 'Available'} Operations
+            {activeTab === 'settings' ? <Settings size={18} color="var(--primary-glow)" /> : <Terminal size={18} color="var(--primary-glow)" />}
+            {activeTab === 'settings' ? 'System Configuration' : (categories[activeTab]?.label || 'Available') + ' Operations'}
           </h2>
-          <div className="tool-grid">
-            {displayedTools.length > 0 ? displayedTools.map(tool => (
-              <div key={tool.name} className="tool-btn" onClick={() => handleToolCall(tool.name)}>
-                <CheckCircle2 size={24} color="var(--primary-glow)" />
-                <div style={{ textAlign: 'left' }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>{tool.name}</span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{tool.description ? tool.description.substring(0, 60) + '...' : ''}</span>
+
+          {activeTab === 'settings' ? (
+            <div className="card" style={{ padding: '2rem', background: 'rgba(255,255,255,0.02)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                <div>
+                  <h4 style={{ marginTop: 0, color: 'var(--primary-glow)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Monitor size={16} /> Backend Connection
+                  </h4>
+                  <div style={{ background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '4px' }}>MCP Gateway URL</div>
+                      <div className="code-font" style={{ fontSize: '0.85rem' }}>http://localhost:3000</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', marginBottom: '4px' }}>Transport Protocol</div>
+                      <div className="code-font" style={{ fontSize: '0.85rem' }}>Streamable-HTTP</div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <h4 style={{ marginTop: 0, color: 'var(--battle-gold)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Zap size={16} /> Dashboard Prefs
+                  </h4>
+                  <div style={{ marginTop: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <span style={{ fontSize: '0.85rem' }}>Glassmorphism Graphics</span>
+                      <span style={{ color: '#00e676', fontSize: '0.75rem', fontWeight: 700 }}>HIGH</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      <span style={{ fontSize: '0.85rem' }}>Advanced Comparison Auto-Scoring</span>
+                      <span style={{ color: '#00e676', fontSize: '0.75rem', fontWeight: 700 }}>ON</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.85rem' }}>Historical Persistence</span>
+                      <span style={{ color: 'var(--text-dim)', fontSize: '0.75rem' }}>SESSION ONLY</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            )) : (
-              <div style={{ color: 'var(--text-dim)', fontStyle: 'italic' }}>No tools available for this category.</div>
-            )}
-          </div>
+              <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '0.8rem', color: 'var(--text-dim)', textAlign: 'center' }}>
+                Spark Optimus Dashboard v2.1.0-Hackathon | Powered by MCP
+              </div>
+            </div>
+          ) : (
+            <div className="tool-grid">
+              {displayedTools.length > 0 ? displayedTools.map(tool => (
+                <div key={tool.name} className="tool-btn" onClick={() => handleToolCall(tool.name)}>
+                  <CheckCircle2 size={24} color="var(--primary-glow)" />
+                  <div style={{ textAlign: 'left' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem', display: 'block' }}>{tool.name}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>{tool.description ? tool.description.substring(0, 60) + '...' : ''}</span>
+                  </div>
+                </div>
+              )) : (
+                <div style={{ color: 'var(--text-dim)', fontStyle: 'italic' }}>No tools available for this category.</div>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Result & Output Area */}

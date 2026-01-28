@@ -1,9 +1,12 @@
 import React from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-    PieChart, Pie, Cell, LineChart, Line
+    PieChart, Pie, Cell, LineChart, Line, ScatterChart, Scatter, ZAxis, ComposedChart, Area
 } from 'recharts';
-import { Clock, AlertTriangle, CheckCircle, Database, Zap } from 'lucide-react';
+import {
+    Clock, AlertTriangle, CheckCircle, Database, Zap,
+    TrendingUp, Shield, Cpu, Info, Target, Boxes, Brain, Sword, Trophy, Activity
+} from 'lucide-react';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
@@ -78,35 +81,86 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
         );
     }
 
-    // 2. Jobs List -> Timeline/Bar Chart
+    // 2. Jobs List -> Analytics Hub
     if (toolName === 'list_jobs' || toolName === 'list_slowest_jobs') {
         const jobs = Array.isArray(data) ? data : (data.jobs || []);
-        const chartData = jobs.map(j => ({
-            id: `Job ${j.jobId}`,
-            duration: j.duration || 0,
-            tasks: j.numTasks || 0, // Ensure tasks are captured
-            status: j.status
-        })).slice(0, 20);
+        if (!jobs.length) return <EmptyState />;
+
+        const chartData = jobs
+            .sort((a, b) => new Date(a.submissionTime) - new Date(b.submissionTime))
+            .map(j => {
+                const date = new Date(j.submissionTime);
+                return {
+                    id: `J${j.jobId}`,
+                    time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                    duration: j.duration || 0,
+                    tasks: j.numTasks || 0,
+                    status: j.status
+                };
+            }).slice(-30);
+
+        // KPI Calculations
+        const totalTasks = jobs.reduce((sum, j) => sum + (j.numTasks || 0), 0);
+        const avgDuration = (jobs.reduce((sum, j) => sum + (j.duration || 0), 0) / (jobs.length || 1) / 1000).toFixed(2);
+        const successRate = jobs.length ? ((jobs.filter(j => j.status === 'SUCCEEDED').length / jobs.length) * 100).toFixed(1) : 0;
 
         return (
             <div className="metrics-container">
-                <h3>{toolName === 'list_slowest_jobs' ? '🐌 Slowest Jobs Analysis' : '⏱️ Job Performance Timeline'}</h3>
-                <div style={{ height: 300, marginTop: '20px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#444" />
-                            <XAxis dataKey="id" stroke="#888" />
-                            <YAxis yAxisId="left" stroke="#8884d8" label={{ value: 'Duration (ms)', angle: -90, position: 'insideLeft' }} />
-                            <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" label={{ value: 'Task Count', angle: 90, position: 'insideRight' }} />
-                            <Tooltip
-                                contentStyle={{ backgroundColor: '#222', border: '1px solid #444' }}
-                                itemStyle={{ color: '#fff' }}
-                            />
-                            <Legend />
-                            <Bar yAxisId="left" dataKey="duration" fill={toolName === 'list_slowest_jobs' ? '#FF8042' : '#8884d8'} name="Duration (ms)" />
-                            <Bar yAxisId="right" dataKey="tasks" fill="#82ca9d" name="Task Count" />
-                        </BarChart>
-                    </ResponsiveContainer>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                    <h3 style={{ margin: 0 }}>{toolName === 'list_slowest_jobs' ? '🐌 Slowest Jobs Timeline' : '⏱️ Job Performance Chronology'}</h3>
+                    <div style={{ fontSize: '0.8rem', opacity: 0.6 }}>Last 30 Jobs</div>
+                </div>
+
+                {/* KPI Summary Row */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+                    <DetailCard label="Total Jobs" value={jobs.length} />
+                    <DetailCard label="Avg Duration" value={`${avgDuration}s`} />
+                    <DetailCard label="Total Tasks" value={totalTasks.toLocaleString()} />
+                    <DetailCard label="Success Rate" value={`${successRate}%`} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    {/* Job Health Timeline */}
+                    <div className="card" style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+                        <h4 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Clock size={16} color="var(--primary-glow)" /> Job Duration Timeline
+                        </h4>
+                        <div style={{ height: 300 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                    <XAxis dataKey="time" stroke="#666" fontSize={9} tickLine={false} />
+                                    <YAxis stroke="#4cc9f0" fontSize={9} tickLine={false} label={{ value: 'ms', angle: -90, position: 'insideLeft', fontSize: 9 }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #444', borderRadius: '8px' }}
+                                        itemStyle={{ fontSize: '12px' }}
+                                    />
+                                    <Line type="monotone" dataKey="duration" stroke="var(--primary-glow)" strokeWidth={3} dot={{ r: 4, fill: 'var(--primary-glow)' }} activeDot={{ r: 6 }} name="Duration (ms)" />
+                                </LineChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Throughput Timeline */}
+                    <div className="card" style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.02)', borderRadius: '12px' }}>
+                        <h4 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Activity size={16} color="#00C49F" /> Task Throughput
+                        </h4>
+                        <div style={{ height: 300 }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={chartData}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} />
+                                    <XAxis dataKey="time" stroke="#666" fontSize={9} tickLine={false} />
+                                    <YAxis stroke="#00C49F" fontSize={9} tickLine={false} label={{ value: 'Count', angle: 90, position: 'insideRight', fontSize: 9 }} orientation="right" />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #444', borderRadius: '8px' }}
+                                        itemStyle={{ fontSize: '12px' }}
+                                    />
+                                    <Bar dataKey="tasks" fill="#00C49F" radius={[4, 4, 0, 0]} name="Task Count" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -174,30 +228,70 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
         );
     }
 
-    // 3. Bottlenecks -> Alert Cards
+    // 3. Bottlenecks -> Optimization Advisor
     if (toolName === 'get_job_bottlenecks') {
-        const findings = data.critical ? data.critical : (Array.isArray(data) ? data : []);
+        const findings = [];
+
+        // Comprehensive extraction from all possible backend keys
+        if (data.critical) findings.push(...data.critical.map(f => ({ ...f, category: 'critical' })));
+        if (data.warnings) findings.push(...data.warnings.map(f => ({ ...f, category: 'warning' })));
+        if (data.info) findings.push(...data.info.map(f => ({ ...f, category: 'optimization' })));
+
+        // Fallback for flat array or unknown schema
+        if (findings.length === 0) {
+            const raw = Array.isArray(data) ? data : (data.findings || []);
+            findings.push(...raw.map(f => ({ ...f, category: 'warning' })));
+        }
 
         return (
             <div className="metrics-container">
-                <h3>🚨 Critical Bottlenecks Identified</h3>
-                <div className="cards-grid">
-                    {findings.length === 0 ? <p>No critical bottlenecks found! 🎉</p> :
-                        findings.map((finding, idx) => (
-                            <div key={idx} className="alert-card">
-                                <div className="alert-header">
-                                    <AlertTriangle color="#FFBB28" size={20} />
-                                    <h4>{finding.stageId ? `Stage ${finding.stageId}` : 'General Issue'}</h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                    <div style={{ padding: '0.75rem', borderRadius: '12px', background: 'rgba(255, 0, 127, 0.1)', border: '1px solid rgba(255, 0, 127, 0.2)' }}>
+                        <Brain size={32} color="#ff007f" />
+                    </div>
+                    <div>
+                        <h3 style={{ margin: 0 }}>Optimization Advisor</h3>
+                        <p style={{ fontSize: '0.8rem', opacity: 0.6, margin: '4px 0 0 0' }}>Deep-dive analysis of Spark job execution bottlenecks</p>
+                    </div>
+                </div>
+
+                <div className="intelligence-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
+                    {findings.length === 0 ? (
+                        <div className="card" style={{ textAlign: 'center', padding: '3rem', width: '100%' }}>
+                            <CheckCircle color="#00e676" size={48} style={{ marginBottom: '1rem', opacity: 0.3 }} />
+                            <p style={{ color: 'var(--text-dim)' }}>No optimization bottlenecks detected.</p>
+                        </div>
+                    ) : (
+                        findings.map((f, i) => (
+                            <div key={i} className={`ai-advisor-card ${f.category || 'warning'}`}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                    <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>
+                                        {f.stageId !== undefined ? `Stage ${f.stageId}` : (f.title || f.name || 'Insight')}
+                                    </h4>
+                                    <span className="glass-pill" style={{ opacity: 0.7, fontSize: '0.7rem' }}>
+                                        {f.category?.toUpperCase() || 'ADVICE'}
+                                    </span>
                                 </div>
-                                <p>{finding.description || JSON.stringify(finding)}</p>
-                                {finding.recommendation && (
-                                    <div className="recommendation">
-                                        <strong>💡 Fix:</strong> {finding.recommendation}
+                                <p style={{ fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '1.25rem', color: '#fff' }}>
+                                    {f.description || (typeof f === 'string' ? f : JSON.stringify(f))}
+                                </p>
+                                {(f.recommendation || f.suggestion) && (
+                                    <div style={{
+                                        padding: '1rem',
+                                        borderRadius: '12px',
+                                        background: 'rgba(0,0,0,0.2)',
+                                        border: '1px solid rgba(255,255,255,0.05)',
+                                        fontSize: '0.8rem'
+                                    }}>
+                                        <div style={{ color: 'var(--primary-glow)', fontWeight: 800, fontSize: '0.65rem', textTransform: 'uppercase', marginBottom: '6px', letterSpacing: '0.08em' }}>
+                                            Recommendation
+                                        </div>
+                                        <div style={{ opacity: 0.9, lineHeight: 1.4 }}>{f.recommendation || f.suggestion}</div>
                                     </div>
                                 )}
                             </div>
                         ))
-                    }
+                    )}
                 </div>
             </div>
         );
@@ -440,65 +534,110 @@ const Visualizer = ({ toolName, data, onSelectApp }) => {
         );
     }
 
-    // 12. Performance Comparison -> Side-by-Side Table
+    // 12. Performance Comparison -> Battle Scorecard
     if (toolName === 'compare_job_performance') {
         const compData = (Array.isArray(data) && data.length > 0) ? data[0] : data;
-
-        // Very robust extraction - look for multiple possible key names
         const summary = compData.executor_metrics || compData.summary_performance || compData.performance_summary || compData.summary || {};
         const app1 = summary.app1 || compData.app1 || {};
         const app2 = summary.app2 || compData.app2 || {};
+        const perf1 = compData.job_performance?.app1 || {};
+        const perf2 = compData.job_performance?.app2 || {};
         const comparison = summary.comparison || compData.comparison || {};
 
-        const metrics = [
-            { id: 'total_duration', label: 'Duration (ms)' },
-            { id: 'completed_tasks', label: 'Tasks Completed' },
-            { id: 'total_executors', label: 'Executors' },
-            { id: 'total_shuffle_read', label: 'Shuffle Read (B)' },
-            { id: 'total_shuffle_write', label: 'Shuffle Write (B)' },
-            { id: 'total_gc_time', label: 'GC Time (ms)' }
-        ];
+        // Calculate Battle Scores
+        const calculateScore = (app, perf) => {
+            const duration = app.total_duration || app.duration || 0;
+            if (!duration) return 0;
+            const gc = app.total_gc_time || app.gc_time || 0;
+            const gcPenalty = (gc / duration) * 100;
+            const durationScore = Math.max(0, 100 - (duration / 100000) * 10);
+            const tasks = perf.count || 1;
+            const completed = perf.completed_count || 0;
+            const taskScore = (completed / tasks) * 100;
+            return Math.round((durationScore * 0.5) + (taskScore * 0.3) - (gcPenalty * 2));
+        };
+
+        const score1 = calculateScore(app1, perf1);
+        const score2 = calculateScore(app2, perf2);
+        const winner = score1 > score2 ? 1 : (score2 > score1 ? 2 : 0);
 
         return (
             <div className="metrics-container">
-                <h3>📈 Performance Analysis</h3>
-                <div className="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Metric</th>
-                                <th>App 1</th>
-                                <th>App 2</th>
-                                <th>Ratio</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {metrics.map((m, idx) => {
-                                // Try both full ID and short ID
-                                const shortId = m.id.replace('total_', '');
-                                const v1 = app1[m.id] !== undefined ? app1[m.id] : app1[shortId];
-                                const v2 = app2[m.id] !== undefined ? app2[m.id] : app2[shortId];
+                <div className="battle-scorecard shadow-pulse">
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>APPLICATION 1</div>
+                        <div className={`battle-circle ${winner === 1 ? 'winner' : ''}`}>
+                            <div style={{ fontSize: '2rem', fontWeight: 800 }}>{score1 || '--'}</div>
+                            <div style={{ fontSize: '0.6rem', opacity: 0.6 }}>EFFICIENCY</div>
+                            {winner === 1 && <Trophy size={20} color="var(--battle-gold)" style={{ position: 'absolute', top: -10, right: -10 }} />}
+                        </div>
+                    </div>
 
-                                const ratioKey = `${shortId}_ratio`;
-                                const ratioValue = comparison[ratioKey] || comparison[`${m.id}_ratio` || `ratio_${shortId}`];
-                                const ratio = ratioValue !== undefined ? ratioValue : (v1 && v1 !== 0 ? (v2 / v1).toFixed(2) : '1.0');
+                    <div className="vs-logo">VS</div>
 
-                                return (
-                                    <tr key={idx}>
-                                        <td style={{ fontWeight: 600 }}>{m.label}</td>
-                                        <td>{v1 !== undefined && v1 !== null ? v1.toLocaleString() : '0'}</td>
-                                        <td>{v2 !== undefined && v2 !== null ? v2.toLocaleString() : '0'}</td>
-                                        <td style={{
-                                            color: parseFloat(ratio) < 0.95 ? '#00e676' : (parseFloat(ratio) > 1.05 ? '#ff4444' : 'inherit'),
-                                            fontWeight: 700
-                                        }}>
-                                            {ratio}x
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginBottom: '0.5rem' }}>APPLICATION 2</div>
+                        <div className={`battle-circle ${winner === 2 ? 'winner' : ''}`}>
+                            <div style={{ fontSize: '2rem', fontWeight: 800 }}>{score2 || '--'}</div>
+                            <div style={{ fontSize: '0.6rem', opacity: 0.6 }}>EFFICIENCY</div>
+                            {winner === 2 && <Trophy size={20} color="var(--battle-gold)" style={{ position: 'absolute', top: -10, left: -10 }} />}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="stats-grid-v2">
+                    <div className="card">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--primary-glow)' }}>
+                            <TrendingUp size={18} />
+                            <h4 style={{ margin: 0, fontSize: '0.9rem' }}>Efficiency Metrics</h4>
+                        </div>
+                        <div className="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr><th>Metric</th><th>App 1</th><th>App 2</th><th>Ratio</th></tr>
+                                </thead>
+                                <tbody>
+                                    {[
+                                        { id: 'total_duration', label: 'Duration (ms)' },
+                                        { id: 'completed_tasks', label: 'Tasks' },
+                                        { id: 'total_shuffle_read', label: 'Shuffle Read' },
+                                        { id: 'total_gc_time', label: 'GC Time' }
+                                    ].map((m, idx) => {
+                                        const shortId = m.id.replace('total_', '');
+                                        const v1 = app1[m.id] !== undefined ? app1[m.id] : app1[shortId];
+                                        const v2 = app2[m.id] !== undefined ? app2[m.id] : app2[shortId];
+                                        const ratio = (v1 && v1 !== 0) ? (v2 / v1).toFixed(2) : '1.0';
+                                        return (
+                                            <tr key={idx}>
+                                                <td style={{ fontSize: '0.85rem' }}>{m.label}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{v1?.toLocaleString() || '0'}</td>
+                                                <td style={{ fontSize: '0.85rem' }}>{v2?.toLocaleString() || '0'}</td>
+                                                <td style={{ fontSize: '0.85rem', fontWeight: 700, color: parseFloat(ratio) < 0.95 ? '#00e676' : (parseFloat(ratio) > 1.05 ? '#ff4444' : 'inherit') }}>{ratio}x</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div className="card">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', color: 'var(--battle-gold)' }}>
+                            <Sword size={18} />
+                            <h4 style={{ margin: 0, fontSize: '0.9rem' }}>Performance Verdict</h4>
+                        </div>
+                        <div style={{ fontSize: '0.85rem', lineHeight: 1.6, opacity: 0.8 }}>
+                            {winner === 0 ? (
+                                <p>Applications are performing identically. Configuration is stable across both environments.</p>
+                            ) : (
+                                <p>
+                                    App {winner} is the performance winner.
+                                    {winner === 1 ? " Configuration 1 handles cycles more efficiently." : " Configuration 2 demonstrates superior parallelism."}
+                                    We recommend prioritizing settings from App {winner} for production.
+                                </p>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         );
